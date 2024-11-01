@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Product Catalog</title>
+    <link rel="stylesheet" href="./assets/css/login.css">
+    <link rel="shortcut icon" href="./assets/images/fav.png" type="image/x-icon">
+</head>
+<body>
+    <div class="container">
+        <center><img src="./assets/images/logo.png" width="60%" alt=""></center>
+        <h1>Product Catalog</h1>
+        
+        <div id="product-list">
+            <!-- Products will be dynamically loaded here -->
+        </div>
+
+        <h2>Place an Order</h2>
+        <form id="order-form" method="post" action="ecommerce.php">
+            <div>
+                <label for="product_id">Select Product:</label>
+                <select id="product_id" name="product_id" required onchange="fetchProductDetails()">
+                    <!-- Options will be populated from the database -->
+                </select>
+            </div>
+            <div>
+                <label for="order_quantity">Quantity:</label>
+                <input id="order_quantity" type="number" name="order_quantity" min="1" required>
+            </div>
+            <button type="submit">Place Order</button>
+        </form>
+
+        <h3>Get Product Details</h3>
+        <div>
+            <label for="input_product_id">Enter Product ID:</label>
+            <input type="number" id="input_product_id" oninput="fetchProductDetailsById()" required>
+        </div>
+        <div id="product-details">
+            <!-- Product details will be displayed here -->
+        </div>
+    </div>
+
+    <script>
+        // Fetch products from ecommerce.php
+        fetch('ecommerce.php?action=get_products')
+            .then(response => response.json())
+            .then(data => {
+                const productList = document.getElementById('product-list');
+                const productSelect = document.getElementById('product_id');
+
+                // Loop through products and display them
+                data.products.forEach(product => {
+                    const productDiv = document.createElement('div');
+                    productDiv.innerHTML = `
+                        <h3>${product.product_name}</h3>
+                        <p>Price: $${product.price}</p>
+                        <p>Available Stock: ${product.stock_quantity}</p>
+                    `;
+                    productList.appendChild(productDiv);
+
+                    // Add option to select dropdown
+                    const option = document.createElement('option');
+                    option.value = product.product_id;
+                    option.textContent = product.product_name;
+                    productSelect.appendChild(option);
+                });
+            })
+            .catch(error => console.error('Error fetching products:', error));
+
+        // Function to fetch and display product details based on selected product
+        function fetchProductDetailsById() {
+            const productId = document.getElementById('input_product_id').value;
+
+            if (productId) {
+                fetch(`ecommerce.php?action=get_product_details&product_id=${productId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        const detailsDiv = document.getElementById('product-details');
+                        if (data) {
+                            detailsDiv.innerHTML = `
+                                <p>Name: ${data.product_name}</p>
+                                <p>Total Orders: ${data.total_orders}</p>
+                                <p>Total Quantity Ordered: ${data.total_quantity_ordered}</p>
+                            `;
+                        } else {
+                            detailsDiv.innerHTML = `<p>No details found for this product.</p>`;
+                        }
+                    })
+                    .catch(error => console.error('Error fetching product details:', error));
+            } else {
+                document.getElementById('product-details').innerHTML = ''; // Clear details if no ID is entered
+            }
+        }
+    </script>
+</body>
+</html>
